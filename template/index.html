@@ -2,158 +2,117 @@
  * @Author: niukunlong niukunlong4379@ienglish.cn
  * @Date: 2024-04-09 14:59:55
  * @LastEditors: niukunlong niukunlong4379@ienglish.cn
- * @LastEditTime: 2024-05-17 16:04:35
+ * @LastEditTime: 2024-05-20 16:00:16
  * @FilePath: \tope-message-center-frontd:\prictice\0409\mobile-project\src\index.html
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta
-			name="viewport"
-			content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0" />
-		<meta http-equiv="x-ua-compatible" content="ie=edge" />
-		<title><% htmlWebpackPlugin.options.title %></title>
-		<!--循环引入-->
-		<% for (var i in htmlWebpackPlugin.options.files &&
-		htmlWebpackPlugin.options.files.js) { %>
-		<script src="<%= htmlWebpackPlugin.options.files.js[i] %>"></script>
-		<% } %>
-	</head>
-	<% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env
-	== 'qa' ) { %>
-	<style>
-		#draggable-button {
-			position: fixed;
-			top: 20px;
-			right: 20px;
-			padding: 5px;
-			width: 120px;
-			text-align: center;
-			line-height: 28px;
-			background-color: #409eff;
-			color: #fff;
-			border: none;
-			border-radius: 5px;
-			position: fixed;
-			cursor: pointer;
-			font-size: 18px;
-			z-index: 1000;
-		}
-	</style>
-	<% } %>
-	<body>
-		<div id="emp-root"></div>
-		<% if (htmlWebpackPlugin.options.env =='test' ||
-		htmlWebpackPlugin.options.env == 'qa' ) { %>
-		<div id="draggable-button">上传测试报告</div>
-		<% } %>
-	</body>
-	<% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env
-	== 'qa' ) { %>
-	<script>
-		// console.log("测试环境", "<%= htmlWebpackPlugin.options.commitHash %>")
-		var button = document.getElementById("draggable-button")
-		let isDragging = false
-		let isMoved = false
-		let offsetX = 0
-		let offsetY = 0
-		let isTouchDevice =
-			"ontouchstart" in window ||
-			navigator.maxTouchPoints > 0 ||
-			navigator.msMaxTouchPoints > 0
-		button.addEventListener("click", function (e) {
-			if (isMoved) {
-				e.preventDefault()
-				isMoved = false
-			} else {
-				console.log("上传测试报告", window.__coverage__)
-				let str = Object.keys(window.__coverage__)[0]
-				let filePath = str.slice(0, str.indexOf("workspace") + 10).trim()
-				let uuid = new Date().getTime()
-				let newObjStr = JSON.stringify(window.__coverage__).replace(
-					new RegExp(filePath, "g"),
-					"/font/release/" + uuid + "/"
-				)
-				var commitHash = "<%= htmlWebpackPlugin.options.commitHash %>"
-				let projectName = "<%= htmlWebpackPlugin.options.projectName %>"
-				let gitUrl = "<%= htmlWebpackPlugin.options.gitUrl %>"
-				let reqUrl =
-					"https://qa-g-gateway.tope365.com/tope-jacoco/cov/upload/vue?ocProjectId=1&ocProjectName=" +
-					projectName +
-					"&serviceName=" +
-					projectName +
-					"&serviceType=font&gitUrl=" +
-					gitUrl +
-					"&gitCommitId=" +
-					commitHash +
-					"&uuid=" +
-					uuid
-				const fileBlob = new Blob([newObjStr], { type: "text/plain" })
-				const formData = new FormData()
-				formData.append("file", fileBlob, "out.txt")
-				fetch(reqUrl, {
-					method: "POST",
-					body: formData
-				})
-					.then(response => response.json())
-					.then(data => {
-						console.log("Success:", data)
-					})
-					.catch(error => {
-						console.error("Error:", error)
-					})
-			}
-		})
-		button.addEventListener(
-			isTouchDevice ? "touchstart" : "mousedown",
-			function (e) {
-				const rect = button.getBoundingClientRect()
-				offsetX = isTouchDevice
-					? e.touches[0].clientX - rect.left
-					: e.clientX - rect.left
-				offsetY = isTouchDevice
-					? e.touches[0].clientY - rect.top
-					: e.clientY - rect.top
-				isDragging = true
-			}
-		)
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title><% htmlWebpackPlugin.options.title %></title>
+    <!--循环引入-->
+    <% for (var i in htmlWebpackPlugin.options.files && htmlWebpackPlugin.options.files.js) { %>
+    <script src="<%= htmlWebpackPlugin.options.files.js[i] %>"></script>
+    <% } %>
+  </head>
+  <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
+  <style>
+    #draggable-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 5px;
+      width: 120px;
+      text-align: center;
+      line-height: 28px;
+      background-color: #409eff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      position: fixed;
+      cursor: pointer;
+      font-size: 16px;
+      z-index: 1000;
+    }
+  </style>
+  <% } %>
+  <body>
+    <div id="emp-root"></div>
+    <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
+    <div id="draggable-button">上传测试报告</div>
+    <% } %>
+  </body>
+  <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
+  <script>
+    // console.log("测试环境", "<%= htmlWebpackPlugin.options.commitHash %>")
+    var button = document.getElementById("draggable-button");
+    let isDragging = false;
+    let isMoved = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    button.addEventListener("click", function (e) {
+      if (isMoved) {
+        e.preventDefault();
+        isMoved = false;
+      } else {
+        console.log("上传测试报告", window.__coverage__);
+        let str = Object.keys(window.__coverage__)[0];
+        let filePath = str.slice(0, str.indexOf("workspace") + 10).trim();
+        let uuid = new Date().getTime();
+        let newObjStr = JSON.stringify(window.__coverage__).replace(new RegExp(filePath, "g"), "/font/release/" + uuid + "/");
+        var commitHash = "<%= htmlWebpackPlugin.options.commitHash %>";
+        let projectName = "<%= htmlWebpackPlugin.options.projectName %>";
+        let gitUrl = "<%= htmlWebpackPlugin.options.gitUrl %>";
+        let reqUrl = "https://qa-g-gateway.tope365.com/tope-jacoco/cov/upload/vue?ocProjectId=1&ocProjectName=" + projectName + "&serviceName=" + projectName + "&serviceType=font&gitUrl=" + gitUrl + "&gitCommitId=" + commitHash + "&uuid=" + uuid;
+        const fileBlob = new Blob([newObjStr], { type: "text/plain" });
+        const formData = new FormData();
+        formData.append("file", fileBlob, "out.txt");
+        fetch(reqUrl, {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    });
+    button.addEventListener(isTouchDevice ? "touchstart" : "mousedown", function (e) {
+      const rect = button.getBoundingClientRect();
+      offsetX = isTouchDevice ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+      offsetY = isTouchDevice ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+      isDragging = true;
+    });
 
-		document.addEventListener(
-			isTouchDevice ? "touchmove" : "mousemove",
-			function (e) {
-				if (isDragging) {
-					button.style.left =
-						(isTouchDevice ? e.touches[0].clientX : e.clientX) - offsetX + "px"
-					button.style.top =
-						(isTouchDevice ? e.touches[0].clientY : e.clientY) - offsetY + "px"
-					isMoved = true
-				}
-			}
-		)
+    document.addEventListener(isTouchDevice ? "touchmove" : "mousemove", function (e) {
+      if (isDragging) {
+        button.style.left = (isTouchDevice ? e.touches[0].clientX : e.clientX) - offsetX + "px";
+        button.style.top = (isTouchDevice ? e.touches[0].clientY : e.clientY) - offsetY + "px";
+        isMoved = true;
+      }
+    });
 
-		document.addEventListener(
-			isTouchDevice ? "touchend" : "mouseup",
-			function (e) {
-				isDragging = false
-			}
-		)
+    document.addEventListener(isTouchDevice ? "touchend" : "mouseup", function (e) {
+      isDragging = false;
+    });
 
-		// Double tap to toggle visibility
-		let lastTap = 0
-		button.addEventListener(
-			isTouchDevice ? "touchend" : "mouseup",
-			function (e) {
-				const currentTime = new Date().getTime()
-				const tapLength = currentTime - lastTap
-				if (tapLength < 500 && tapLength > 0) {
-					button.style.display =
-						button.style.display === "block" ? "block" : "block"
-				}
-				lastTap = currentTime
-			}
-		)
-	</script>
-	<% } %>
+    // Double tap to toggle visibility
+    let lastTap = 0;
+    button.addEventListener(isTouchDevice ? "touchend" : "mouseup", function (e) {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 500 && tapLength > 0) {
+        button.style.display = button.style.display === "block" ? "block" : "block";
+      }
+      lastTap = currentTime;
+    });
+  </script>
+  <% } %>
 </html>
