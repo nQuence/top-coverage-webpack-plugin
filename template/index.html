@@ -2,7 +2,7 @@
  * @Author: niukunlong niukunlong4379@ienglish.cn
  * @Date: 2024-04-09 14:59:55
  * @LastEditors: niukunlong niukunlong4379@ienglish.cn
- * @LastEditTime: 2024-06-05 16:45:18
+ * @LastEditTime: 2024-06-18 16:45:45
  * @FilePath: \tope-message-center-frontd:\prictice\0409\mobile-project\src\index.html
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -19,23 +19,67 @@
     <% } %>
   </head>
   <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
-  <style>
+  <style id="mainStyle">
     #draggable-button {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 5px;
+      top: 10px;
+      right: 10px;
+      padding: 2px;
       width: 120px;
       text-align: center;
       line-height: 28px;
-      background-color: #409eff;
+      background-color: #07c160;
       color: #fff;
       border: none;
       border-radius: 5px;
-      position: fixed;
       cursor: pointer;
-      font-size: 16px;
       z-index: 1000;
+      font-size: 16px;
+      touch-action: none; /* 禁用默认的触摸操作 */
+    }
+    #modal {
+      display: none;
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 10px 20px 20px 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      z-index: 1001;
+      border-radius: 10px;
+    }
+    #modal div {
+      padding: 10px 0px;
+    }
+    #modal button {
+      display: inline-block;
+      margin: 0px;
+      padding: 5px 10px;
+      margin-left: 0px;
+      font-size: 16px;
+      cursor: pointer;
+      color: #fff;
+      background-color: #07c160;
+      border: none;
+      border-radius: 5px;
+    }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+    .btns {
+      width: 180px;
+      padding: 10px 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
     }
   </style>
   <% } %>
@@ -43,77 +87,188 @@
     <div id="emp-root"></div>
     <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
     <div id="draggable-button">上传测试报告</div>
+    <div id="overlay"></div>
+    <div id="modal">
+      <div>请选择上传：</div>
+      <div class="btns">
+        <button id="upload-incremental">增量报告</button>
+        <button id="upload-test">全量报告</button>
+      </div>
+    </div>
     <% } %>
   </body>
   <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
-  <script>
-    // console.log("测试环境", "<%= htmlWebpackPlugin.options.commitHash %>")
+  <script id="mainJs">
     var button = document.getElementById("draggable-button");
+    var modal = document.getElementById("modal");
+    var overlay = document.getElementById("overlay");
+    var uploadIncrementalBtn = document.getElementById("upload-incremental");
+    var uploadTestBtn = document.getElementById("upload-test");
     let isDragging = false;
-    let isMoved = false;
     let offsetX = 0;
     let offsetY = 0;
+    let initialX, initialY;
     let isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
     button.addEventListener("click", function (e) {
-      if (isMoved) {
+      if (isDragging) {
         e.preventDefault();
-        isMoved = false;
+        isDragging = false;
       } else {
-        console.log("上传测试报告", window.__coverage__);
-        let str = Object.keys(window.__coverage__)[0];
-        let filePath = str.slice(0, str.indexOf("workspace") + 10).trim();
-        let uuid = new Date().getTime();
-        let newObjStr = JSON.stringify(window.__coverage__).replace(new RegExp(filePath, "g"), "/font/release/" + uuid + "/");
-        var commitHash = "<%= htmlWebpackPlugin.options.commitHash %>";
-        let projectName = "<%= htmlWebpackPlugin.options.projectName %>";
-        let gitUrl = "<%= htmlWebpackPlugin.options.gitUrl %>";
-        let apiUrl = "<%= htmlWebpackPlugin.options.apiUrl %>";
-        let reqUrl = apiUrl + "/tope-jacoco/cov/upload/vue?ocProjectId=1&ocProjectName=" + projectName + "&serviceName=" + projectName + "&serviceType=font&gitUrl=" + gitUrl + "&gitCommitId=" + commitHash + "&uuid=" + uuid;
-        const fileBlob = new Blob([newObjStr], { type: "text/plain" });
-        const formData = new FormData();
-        formData.append("file", fileBlob, "out.txt");
-        fetch(reqUrl, {
-          method: "POST",
-          body: formData,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Success:", data);
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-          });
+        if (!isDragging) {
+          overlay.style.display = "block";
+          modal.style.display = "block";
+        }
       }
     });
     button.addEventListener(isTouchDevice ? "touchstart" : "mousedown", function (e) {
       const rect = button.getBoundingClientRect();
       offsetX = isTouchDevice ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
       offsetY = isTouchDevice ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+      initialX = rect.left;
+      initialY = rect.top;
       isDragging = true;
     });
 
     document.addEventListener(isTouchDevice ? "touchmove" : "mousemove", function (e) {
-      if (isDragging) {
-        button.style.left = (isTouchDevice ? e.touches[0].clientX : e.clientX) - offsetX + "px";
-        button.style.top = (isTouchDevice ? e.touches[0].clientY : e.clientY) - offsetY + "px";
-        isMoved = true;
-      }
+      if (!isDragging) return;
+      e.preventDefault(); // 阻止默认的触摸事件
+      const clientX = isTouchDevice ? e.touches[0].clientX : e.clientX;
+      const clientY = isTouchDevice ? e.touches[0].clientY : e.clientY;
+      // 计算新位置
+      let newX = clientX - offsetX;
+      let newY = clientY - offsetY;
+      // 获取屏幕宽度和高度
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      // 获取按钮宽度和高度
+      const buttonWidth = button.offsetWidth;
+      const buttonHeight = button.offsetHeight;
+      // 限制新位置在屏幕边界内
+      newX = Math.max(0, Math.min(newX, screenWidth - buttonWidth));
+      newY = Math.max(0, Math.min(newY, screenHeight - buttonHeight));
+      // 使用 requestAnimationFrame 确保动画的流畅性
+      requestAnimationFrame(() => {
+        button.style.left = newX + "px";
+        button.style.top = newY + "px";
+      });
     });
-
-    document.addEventListener(isTouchDevice ? "touchend" : "mouseup", function (e) {
+    document.addEventListener(isTouchDevice ? "touchend" : "mouseup", function () {
       isDragging = false;
     });
-
-    // Double tap to toggle visibility
-    let lastTap = 0;
-    button.addEventListener(isTouchDevice ? "touchend" : "mouseup", function (e) {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTap;
-      if (tapLength < 500 && tapLength > 0) {
-        button.style.display = button.style.display === "block" ? "block" : "block";
-      }
-      lastTap = currentTime;
+    overlay.addEventListener("click", function () {
+      overlay.style.display = "none";
+      modal.style.display = "none";
     });
+    uploadIncrementalBtn.addEventListener("click", function () {
+      overlay.style.display = "none";
+      modal.style.display = "none";
+      let uuid = new Date().getTime();
+      uploadReport(2, uuid);
+    });
+    uploadTestBtn.addEventListener("click", function () {
+      overlay.style.display = "none";
+      modal.style.display = "none";
+      let uuid = new Date().getTime();
+      uploadReport(1, uuid);
+    });
+    async function uploadReport(type, uuid) {
+      let newObjStr = await getIncrementData(type, uuid);
+      // 本地json逻辑处理
+      /*  let obj = JSON.parse(newObjStr)
+      let str = Object.keys(obj)[0]
+      console.log(str) */
+      var commitHash = "<%= htmlWebpackPlugin.options.commitHash %>";
+      let projectName = "<%= htmlWebpackPlugin.options.projectName %>";
+      let gitUrl = "<%= htmlWebpackPlugin.options.gitUrl %>";
+      let apiUrl = "<%= htmlWebpackPlugin.options.apiUrl %>";
+      let reqUrl = apiUrl + "/tope-jacoco/cov/upload/vue?ocProjectId=1&ocProjectName=" + projectName + "&serviceName=" + projectName + "&serviceType=font&gitUrl=" + gitUrl + "&gitCommitId=" + commitHash + "&uuid=" + uuid + "&type=" + type;
+      const fileBlob = new Blob([newObjStr], { type: "text/plain" });
+      const formData = new FormData();
+      formData.append("file", fileBlob, "out.txt");
+      fetch(reqUrl, {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          alert("上传成功");
+          console.log("Success:", data);
+        })
+        .catch((error) => {
+          alert("上传失败");
+          console.error("Error:", error);
+        });
+    }
+    async function getIncrementData(type, uuid) {
+      let str = Object.keys(window.__coverage__)[0];
+      let filePath = str.slice(0, str.indexOf("workspace") + 10).trim();
+      let newObjStr = JSON.stringify(window.__coverage__).replace(new RegExp(filePath, "g"), "/font/release/" + uuid + "/");
+      console.log("测试覆盖率", JSON.parse(newObjStr));
+      if (type == 1) {
+        return newObjStr;
+      } else {
+        const accessToken = "<%= htmlWebpackPlugin.options.accessToken %>";
+        const gitlabUrl = "<%= htmlWebpackPlugin.options.gitlabUrl %>";
+        // 目标分支正常都是master
+        const branchName = "<%= htmlWebpackPlugin.options.branchName %>" || "master";
+        const projectId = "<%= htmlWebpackPlugin.options.projectId %>";
+        const apiUrl = gitlabUrl + "/api/v4/projects/" + encodeURIComponent(projectId) + "/repository/branches/" + branchName;
+        // 目标分支commitId
+        let commitIdMaster = "";
+        // 当前代码的commitId
+        let commitId2 = "<%= htmlWebpackPlugin.options.commitHash %>";
+        const headers = {
+          "PRIVATE-TOKEN": accessToken,
+        };
+        const outJson = JSON.parse(newObjStr);
+        async function getCommitId() {
+          try {
+            // 发送 GET 请求获取目标分支的 commit ID
+            let response = await fetch(apiUrl, { headers: headers });
+            if (!response.ok) {
+              throw new Error("HTTP error! status: " + response.status);
+            }
+            let data = await response.json();
+            commitIdMaster = data.commit.id;
+            // 获取改变的文件列表
+            let apiUrl2 = gitlabUrl + "/api/v4/projects/" + encodeURIComponent(projectId) + "/repository/compare?from=" + commitIdMaster + "&to=" + commitId2;
+            response = await fetch(apiUrl2, { headers: headers });
+            if (!response.ok) {
+              throw new Error("HTTP error! status:" + response.status);
+            }
+            data = await response.json();
+            let list1 = data.diffs.map((item) => item.new_path);
+            // 获取覆盖率文件列表
+            const keys = Object.keys(outJson);
+            let list2 = keys.map((item) => {
+              // 本地
+              item = item.replace(/\\/g, "/");
+              const parts = item.split("src/");
+              const result = parts.length > 1 ? "src/" + parts[1] : "";
+              return result;
+            });
+            // 找出 list1 和 list2 公用的元素
+            let list3 = list1.filter((item) => list2.includes(item));
+            // 根据 list3 过滤 outJson 对象的 key
+            let result = {};
+            list3.forEach((item) => {
+              // 本地
+              item = item.replace(/\//g, "\\");
+              for (let key in outJson) {
+                if (key.includes(item)) {
+                  result[key] = outJson[key];
+                }
+              }
+            });
+            console.log("result", JSON.stringify(result));
+            return JSON.stringify(result);
+          } catch (error) {
+            console.error("Error:", error);
+          }
+        }
+        return await getCommitId();
+      }
+    }
   </script>
   <% } %>
 </html>
