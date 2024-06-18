@@ -2,7 +2,7 @@
  * @Author: niukunlong niukunlong4379@ienglish.cn
  * @Date: 2024-04-09 14:59:55
  * @LastEditors: niukunlong niukunlong4379@ienglish.cn
- * @LastEditTime: 2024-06-18 16:45:45
+ * @LastEditTime: 2024-06-18 18:01:52
  * @FilePath: \tope-message-center-frontd:\prictice\0409\mobile-project\src\index.html
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -242,7 +242,7 @@
             const keys = Object.keys(outJson);
             let list2 = keys.map((item) => {
               // 本地
-              item = item.replace(/\\/g, "/");
+              // item = item.replace(/\\/g, "/");
               const parts = item.split("src/");
               const result = parts.length > 1 ? "src/" + parts[1] : "";
               return result;
@@ -253,7 +253,7 @@
             let result = {};
             list3.forEach((item) => {
               // 本地
-              item = item.replace(/\//g, "\\");
+              // item = item.replace(/\//g, "\\");
               for (let key in outJson) {
                 if (key.includes(item)) {
                   result[key] = outJson[key];
