@@ -2,7 +2,7 @@
  * @Author: niukunlong niukunlong4379@ienglish.cn
  * @Date: 2024-04-09 14:59:55
  * @LastEditors: niukunlong niukunlong4379@ienglish.cn
- * @LastEditTime: 2024-06-18 18:01:52
+ * @LastEditTime: 2024-06-26 15:07:15
  * @FilePath: \tope-message-center-frontd:\prictice\0409\mobile-project\src\index.html
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -51,6 +51,7 @@
     }
     #modal div {
       padding: 10px 0px;
+      font-size: 16px;
     }
     #modal button {
       display: inline-block;
@@ -239,7 +240,7 @@
             data = await response.json();
             let list1 = data.diffs.map((item) => item.new_path);
             // 获取覆盖率文件列表
-            console.log("list1", list1)
+            console.log("list1", list1);
             const keys = Object.keys(outJson);
             let list2 = keys.map((item) => {
               // 本地
@@ -248,10 +249,10 @@
               const result = parts.length > 1 ? "src/" + parts[1] : "";
               return result;
             });
-            console.log("list2", list2)
+            console.log("list2", list2);
             // 找出 list1 和 list2 公用的元素
             let list3 = list1.filter((item) => list2.includes(item));
-            console.log("list3", list3)
+            console.log("list3", list3);
             // 根据 list3 过滤 outJson 对象的 key
             let result = {};
             list3.forEach((item) => {
