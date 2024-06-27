@@ -2,7 +2,7 @@
  * @Author: niukunlong niukunlong4379@ienglish.cn
  * @Date: 2024-04-09 14:59:55
  * @LastEditors: niukunlong niukunlong4379@ienglish.cn
- * @LastEditTime: 2024-06-26 15:07:15
+ * @LastEditTime: 2024-06-27 14:58:36
  * @FilePath: \tope-message-center-frontd:\prictice\0409\mobile-project\src\index.html
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -12,13 +12,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title><% htmlWebpackPlugin.options.title %></title>
+    <title><% htmlWebpackPlugin.options.coverage %></title>
     <!--循环引入-->
     <% for (var i in htmlWebpackPlugin.options.files && htmlWebpackPlugin.options.files.js) { %>
     <script src="<%= htmlWebpackPlugin.options.files.js[i] %>"></script>
     <% } %>
   </head>
-  <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
+  <% if (htmlWebpackPlugin.options.coverage.env =='test' || htmlWebpackPlugin.optionshtmlWebpackPlugin.option.coverage.env == 'qa' ) { %>
   <style id="mainStyle">
     #draggable-button {
       position: fixed;
@@ -86,7 +86,7 @@
   <% } %>
   <body>
     <div id="emp-root"></div>
-    <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
+    <% if (htmlWebpackPlugin.options.coverage.env =='test' || htmlWebpackPlugin.options.coverage.env == 'qa' ) { %>
     <div id="draggable-button">上传测试报告</div>
     <div id="overlay"></div>
     <div id="modal">
@@ -98,7 +98,7 @@
     </div>
     <% } %>
   </body>
-  <% if (htmlWebpackPlugin.options.env =='test' || htmlWebpackPlugin.options.env == 'qa' ) { %>
+  <% if (htmlWebpackPlugin.options.coverage.env =='test' || htmlWebpackPlugin.options.coverage.env == 'qa' ) { %>
   <script id="mainJs">
     var button = document.getElementById("draggable-button");
     var modal = document.getElementById("modal");
@@ -173,15 +173,15 @@
       uploadReport(1, uuid);
     });
     async function uploadReport(type, uuid) {
-      let newObjStr = await getIncrementData(type, uuid);
+      let newObjStr = await getData(type, uuid);
       // 本地json逻辑处理
       /*  let obj = JSON.parse(newObjStr)
       let str = Object.keys(obj)[0]
       console.log(str) */
-      var commitHash = "<%= htmlWebpackPlugin.options.commitHash %>";
-      let projectName = "<%= htmlWebpackPlugin.options.projectName %>";
-      let gitUrl = "<%= htmlWebpackPlugin.options.gitUrl %>";
-      let apiUrl = "<%= htmlWebpackPlugin.options.apiUrl %>";
+      var commitHash = "<%= htmlWebpackPlugin.options.coverage.commitHash %>";
+      let projectName = "<%= htmlWebpackPlugin.options.coverage.projectName %>";
+      let gitUrl = "<%= htmlWebpackPlugin.options.coverage.gitUrl %>";
+      let apiUrl = "<%= htmlWebpackPlugin.options.coverage.apiUrl %>";
       let reqUrl = apiUrl + "/tope-jacoco/cov/upload/vue?ocProjectId=1&ocProjectName=" + projectName + "&serviceName=" + projectName + "&serviceType=font&gitUrl=" + gitUrl + "&gitCommitId=" + commitHash + "&uuid=" + uuid + "&type=" + type;
       const fileBlob = new Blob([newObjStr], { type: "text/plain" });
       const formData = new FormData();
@@ -200,7 +200,7 @@
           console.error("Error:", error);
         });
     }
-    async function getIncrementData(type, uuid) {
+    async function getData(type, uuid) {
       let str = Object.keys(window.__coverage__)[0];
       let filePath = str.slice(0, str.indexOf("workspace") + 10).trim();
       let newObjStr = JSON.stringify(window.__coverage__).replace(new RegExp(filePath, "g"), "/font/release/" + uuid + "/");
@@ -208,69 +208,75 @@
       if (type == 1) {
         return newObjStr;
       } else {
-        const accessToken = "<%= htmlWebpackPlugin.options.accessToken %>";
-        const gitlabUrl = "<%= htmlWebpackPlugin.options.gitlabUrl %>";
+        const accessToken = "<%= htmlWebpackPlugin.options.coverage.accessToken %>";
+        const gitlabUrl = "<%= htmlWebpackPlugin.options.coverage.gitlabUrl %>";
         // 目标分支正常都是master
-        const branchName = "<%= htmlWebpackPlugin.options.branchName %>" || "master";
-        const projectId = "<%= htmlWebpackPlugin.options.projectId %>";
+        const branchName = "<%= htmlWebpackPlugin.options.coverage.branchName %>" || "master";
+        const projectId = "<%= htmlWebpackPlugin.options.coverage.projectId %>";
         const apiUrl = gitlabUrl + "/api/v4/projects/" + encodeURIComponent(projectId) + "/repository/branches/" + branchName;
         // 目标分支commitId
         let commitIdMaster = "";
         // 当前代码的commitId
-        let commitId2 = "<%= htmlWebpackPlugin.options.commitHash %>";
+        let commitId2 = "<%= htmlWebpackPlugin.options.coverage.commitHash %>";
         const headers = {
           "PRIVATE-TOKEN": accessToken,
         };
         const outJson = JSON.parse(newObjStr);
-        async function getCommitId() {
-          try {
-            // 发送 GET 请求获取目标分支的 commit ID
-            let response = await fetch(apiUrl, { headers: headers });
-            if (!response.ok) {
-              throw new Error("HTTP error! status: " + response.status);
+        // 获取目标分支的commitId
+        async function getCommitId(apiUrl) {
+          let response = await fetch(apiUrl, { headers: headers });
+          if (!response.ok) {
+            // throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        }
+        // 获取改变的文件列表
+        async function getDiffList() {
+          let apiUrl2 = gitlabUrl + "/api/v4/projects/" + encodeURIComponent(projectId) + "/repository/compare?from=" + commitIdMaster + "&to=" + commitId2;
+          let response = await fetch(apiUrl2, { headers: headers });
+          return response.json();
+        }
+        // 处理数据
+        function handleData(list1) {
+          const keys = Object.keys(outJson);
+          let list2 = keys.map((item) => {
+            // 本地
+            const parts = item.split("src/");
+            const result = parts.length > 1 ? "src/" + parts[1] : "";
+            return result;
+          });
+          console.log("list2", list2);
+          // 找出 list1 和 list2 公用的元素
+          let list3 = list1.filter((item) => list2.includes(item));
+          console.log("list3", list3);
+          // 根据 list3 过滤 outJson 对象的 key
+          let result = {};
+          list3.forEach((item) => {
+            // 本地
+            for (let key in outJson) {
+              if (key.includes(item)) {
+                result[key] = outJson[key];
+              }
             }
-            let data = await response.json();
+          });
+          return JSON.stringify(result);
+        }
+        async function getFileList() {
+          try {
+            // 获取目标分支的 commit ID
+            let data = await getCommitId(apiUrl);
             commitIdMaster = data.commit.id;
             // 获取改变的文件列表
-            let apiUrl2 = gitlabUrl + "/api/v4/projects/" + encodeURIComponent(projectId) + "/repository/compare?from=" + commitIdMaster + "&to=" + commitId2;
-            response = await fetch(apiUrl2, { headers: headers });
-            if (!response.ok) {
-              throw new Error("HTTP error! status:" + response.status);
-            }
-            data = await response.json();
-            let list1 = data.diffs.map((item) => item.new_path);
-            // 获取覆盖率文件列表
+            let diffListData = await getDiffList();
+            let list1 = diffListData.diffs.map((item) => item.new_path);
             console.log("list1", list1);
-            const keys = Object.keys(outJson);
-            let list2 = keys.map((item) => {
-              // 本地
-              // item = item.replace(/\\/g, "/");
-              const parts = item.split("src/");
-              const result = parts.length > 1 ? "src/" + parts[1] : "";
-              return result;
-            });
-            console.log("list2", list2);
-            // 找出 list1 和 list2 公用的元素
-            let list3 = list1.filter((item) => list2.includes(item));
-            console.log("list3", list3);
-            // 根据 list3 过滤 outJson 对象的 key
-            let result = {};
-            list3.forEach((item) => {
-              // 本地
-              // item = item.replace(/\//g, "\\");
-              for (let key in outJson) {
-                if (key.includes(item)) {
-                  result[key] = outJson[key];
-                }
-              }
-            });
-            console.log("result", JSON.stringify(result));
-            return JSON.stringify(result);
+            // 获取覆盖率文件列表
+            return handleData(list1);
           } catch (error) {
             console.error("Error:", error);
           }
         }
-        return await getCommitId();
+        return getFileList();
       }
     }
   </script>
